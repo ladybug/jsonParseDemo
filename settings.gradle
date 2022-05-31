@@ -1,0 +1,36 @@
+//-*- Mode: groovy -*-
+pluginManagement {
+    repositories {
+        maven {
+            url "${artifactory_server}/plugins-release"
+            credentials {
+                username = artifactory_user
+                password = artifactory_password
+            }
+        }
+
+    }
+}
+//
+//rootProject.name = 'ugc'
+//
+//include 'api'
+//include 'job'
+//include 'uploader'
+//include 'model'
+//include 'decision-lambda'
+//include 'snapshot-exporter'
+//include 'post-purchase-exporter'
+//include 'catalog-exporter'
+//include 'common'
+//include 'functional-tests'
+//rootProject.children.each {project ->
+//    String fileBaseName = project.name.replaceAll("\\p{Upper}") {"-${it.toLowerCase()}"}
+//    project.buildFileName = "${fileBaseName}.gradle"
+//    assert project.projectDir.isDirectory()
+//    assert project.buildFile.isFile()
+//    // Set child project names to ugc-${module}
+//    project.name = rootProject.name + '-' + project.name
+//}
+
+

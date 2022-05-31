@@ -1,0 +1,26 @@
+//-*- Mode: groovy -*-
+
+repositories {
+    maven {
+        url "${artifactory_server}/libs-release"
+        credentials {
+            username = artifactory_user
+            password = artifactory_password
+        }
+        mavenContent {
+            releasesOnly()
+        }
+    }
+
+    maven {
+        url "${artifactory_server}/libs-snapshot"
+        credentials {
+            username = artifactory_user
+            password = artifactory_password
+        }
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+    maven { url "https://dl.bintray.com/datadog/datadog-maven" }
+}

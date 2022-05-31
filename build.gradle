@@ -1,0 +1,123 @@
+plugins {
+    id 'org.springframework.boot' version '2.7.0'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'nebula.release' version '15.3.1'
+    id 'com.diffplug.spotless' version '5.9.0'
+    id 'org.sonarqube' version '3.1'
+    id 'jacoco'
+    id 'java'
+}
+
+apply from: 'artifactory.gradle'
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+wrapper {
+    gradleVersion = '7.1.1'
+    distributionUrl = "${artifactory_server}/gradle-distributions/gradle-${gradleVersion}-bin.zip"
+}
+
+subprojects {
+    version = rootProject.version
+
+    apply plugin: 'java'
+    apply plugin: 'com.diffplug.spotless'
+    apply plugin: 'jacoco'
+    apply plugin: 'org.sonarqube'
+
+    configurations {
+        datadog
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    dependencies {
+        apply from: "${rootDir}/artifactory.gradle"
+
+        annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    }
+
+    spotless {
+        java {
+            targetExclude("build/generatedSources/**/*.java")
+            googleJavaFormat()
+        }
+    }
+
+    jacocoTestReport {
+        dependsOn test // tests are required to run before generating the report
+        reports {
+            xml.enabled true
+            csv.enabled false
+            html.enabled true
+        }
+    }
+
+
+    sonarqube {
+        properties {
+            property 'sonar.jacoco.xmlReportPaths', "${project.buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+            property 'sonar.dependencyCheck.jsonReportPath', "${project.buildDir}/reports/dependency-check-report.json"
+            property 'sonar.dependencyCheck.htmlReportPath', "${project.buildDir}/reports/dependency-check-report.html"
+        }
+    }
+}
+
+ext['log4j2.version'] = '2.17.0'
+
+task recordVersion(type: Exec) {
+    commandLine "echo Recording version ${project.version}".split()
+    ext.versionfile = new File("version.txt")
+    doLast {
+        versionfile.text = "${project.version}"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.projectlombok:lombok:1.18.18'
+    implementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+//	implementation 'org.junit.jupiter:junit-platform-launcher:5.8.2'
+    implementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+//	implementation 'org.junit.jupiter:junit-vintage-engine:5.8.2'
+    testImplementation(platform("org.junit:junit-bom:5.8.2"))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher") {
+        because("Only needed to run tests in a version of IntelliJ IDEA that bundles older versions")
+    }
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.3'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.13.3'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
+// https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-smile
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.13.3'
+    implementation 'com.google.code.gson:gson:2.9.0'
+}
+
+tasks.check.dependsOn tasks.spotlessCheck
+tasks.sonarqube.dependsOn tasks.check
+//tasks.release.finalizedBy tasks.recordVersion
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
